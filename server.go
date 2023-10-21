@@ -57,6 +57,7 @@ func (s *Server) initRules(cs []entity.Class) error {
 	rules := map[*regexp.Regexp]*entity.Class{}
 
 	for _, c := range cs {
+		c := c
 		for _, r := range c.Rules {
 			rx, err := regexp.Compile(r)
 			if err != nil {
@@ -247,7 +248,7 @@ func (s *Server) putClasses(c *fiber.Ctx) error {
 	}
 
 	classes = append(classes, entity.Class{
-		Name: "Unknown",
+		Name: "Неизвестная ошибка",
 	})
 
 	err = s.initRules(classes)
@@ -264,7 +265,11 @@ func (s *Server) putClasses(c *fiber.Ctx) error {
 }
 
 func (s *Server) classify(message string) *entity.Class {
-	for rx, c := range s.rules {
+	s.rulesMx.RLock()
+	rules := s.rules
+	s.rulesMx.RUnlock()
+
+	for rx, c := range rules {
 		if rx.MatchString(message) {
 			return c
 		}

@@ -2,4 +2,5 @@
 tenderr.exe
 config.yaml
 logs.xlsx
+~$logs.xlsx
 cluster-result.txt

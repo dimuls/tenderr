@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:alpine3.18
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: tenderr
+    volumes:
+      - postgres:/var/lib/postgresql/data
+  clickhouse:
+    image: clickhouse/clickhouse-server:head-alpine
+    ports:
+      - "127.0.0.1:8123:8123"
+      - "127.0.0.1:9000:9000"
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    environment:
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+      CLICKHOUSE_USER: tenderr
+      CLICKHOUSE_PASSWORD: password
+    volumes:
+      - ./clickhouse/users.d:/etc/clickhouse-server/users.d/
+      - clickhouse:/var/lib/clickhouse/
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - grafana:/var/lib/grafana
+
+volumes:
+  postgres:
+  clickhouse:
+  grafana:

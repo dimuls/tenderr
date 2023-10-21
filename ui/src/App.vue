@@ -51,7 +51,7 @@ body,
             </label>
             <textarea
               class="textarea textarea-bordered"
-              rows="6"
+              rows="2"
               v-model="newClass.rules"
             ></textarea>
             <label class="label">
@@ -80,7 +80,7 @@ body,
             </label>
             <textarea
               class="textarea textarea-bordered"
-              rows="6"
+              rows="2"
               v-model="c.rules"
             ></textarea>
             <label class="label">
@@ -99,8 +99,12 @@ body,
       <div class="sticky bottom-0 pb-8 bg-base-200">
         <div class="divider" />
         <div class="flex gap-4 justify-end">
-          <button class="btn btn-neutral" @click="clear">Сбросить</button>
-          <button class="btn btn-neutral" @click="save">Сохранить</button>
+          <button class="btn btn-neutral" @click="clear" :disabled="processing">
+            Сбросить
+          </button>
+          <button class="btn btn-neutral" @click="save" :disabled="processing">
+            Сохранить
+          </button>
         </div>
       </div>
     </div>
@@ -124,6 +128,7 @@ export default {
         rules: "",
       },
       selectedClass: null,
+      processing: false,
     };
   },
   methods: {
@@ -146,15 +151,26 @@ export default {
       this.classes.push(...this.origClasses);
     },
     async save() {
-      const classes = [
-        ...this.classes.map((c) => ({
-          ...c,
-          rules: c.rules.split(/\r?\n/),
-        })),
-      ];
-      await axios.put("/classes", classes);
-      this.origClasses.splice(0, this.origClasses.length);
-      this.origClasses.push(...this.classes);
+      if (this.processing) {
+        return;
+      }
+      this.processing = true;
+
+      try {
+        const classes = [
+          ...this.classes.map((c) => ({
+            ...c,
+            rules: c.rules.split(/\r?\n/),
+          })),
+        ];
+        await axios.put("/classes", classes);
+        this.origClasses.splice(0, this.origClasses.length);
+        this.origClasses.push(...this.classes);
+        this.processing = false;
+      } catch (e) {
+        this.processing = false;
+        throw e;
+      }
     },
   },
   async mounted() {

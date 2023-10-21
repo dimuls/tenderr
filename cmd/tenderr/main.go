@@ -78,11 +78,11 @@ func run(logger *zap.Logger, logLevel zap.AtomicLevel) error {
 	}
 
 	conn, err := clickhouse.Open(&clickhouse.Options{
-		Addr: []string{"127.0.0.1:9000"},
+		Addr: []string{config.Clickhouse.Addr},
 		Auth: clickhouse.Auth{
-			Database: "default",
-			Username: "default",
-			Password: "",
+			Database: config.Clickhouse.Database,
+			Username: config.Clickhouse.Username,
+			Password: config.Clickhouse.Password,
 		},
 	})
 	if err != nil {

@@ -139,12 +139,18 @@ func main() {
 		}
 	}
 
-	for _, clust := range clustered {
-		sort.Sort(result[clust.ID()])
+	for clusterID, ls := range result {
+		sort.Sort(ls)
 
-		fmt.Printf("cluster %s:\n", clust.ID())
-		for _, l := range result[clust.ID()] {
+		var printed int
+
+		fmt.Printf("cluster %d:\n", clusterID)
+		for _, l := range result[clusterID] {
+			if l.count < 50 && printed > 20 {
+				break
+			}
 			fmt.Printf("\t%d: %s\n", l.count, l.text)
+			printed++
 		}
 	}
 }

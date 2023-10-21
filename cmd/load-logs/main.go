@@ -2,8 +2,13 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"math/rand"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/xuri/excelize/v2"
@@ -30,7 +35,21 @@ func main() {
 		logger.Fatal("get rows of logs sheet", zap.Error(err))
 	}
 
-	for i, row := range rows {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		time.Sleep(time.Duration(rand.Intn(100)+10) * time.Millisecond)
+
+		i := rand.Intn(len(rows)-1) + 1
+		row := rows[i]
+
 		if i == 0 {
 			// skip headers
 			continue
@@ -66,5 +85,6 @@ func main() {
 			logger.Error("post log: not ok status code", zap.Int("statusCode", res.StatusCode))
 			continue
 		}
+
 	}
 }

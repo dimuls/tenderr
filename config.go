@@ -18,8 +18,14 @@ type CORS struct {
 type Config struct {
 	Addr        string `yaml:"addr"`
 	PostgresURL string `yaml:"postgresUrl"`
-	CORS        CORS   `yaml:"cors"`
-	LogLevel    string `yaml:"logLevel"`
+	Clickhouse  struct {
+		Addr     string `yaml:"addr"`
+		Database string `yaml:"database"`
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
+	} `yaml:"clickhouse"`
+	CORS     CORS   `yaml:"cors"`
+	LogLevel string `yaml:"logLevel"`
 }
 
 func (c *Config) Load(path string) error {

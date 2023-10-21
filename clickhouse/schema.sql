@@ -26,4 +26,20 @@ create table log (
     class_id UUID,
     msg String
 ) engine = MergeTree()
-    order by (dt ,id)
+    order by (dt ,id);
+
+
+/*
+CREATE TABLE [IF NOT EXISTS] [db.]table_name [ON CLUSTER cluster]
+(
+    name1 type1 [DEFAULT|MATERIALIZED|ALIAS expr1] [TTL expr1],
+    name2 type2 [DEFAULT|MATERIALIZED|ALIAS expr2] [TTL expr2],
+    ...
+) ENGINE = PostgreSQL('host:port', 'database', 'table', 'user', 'password'[, `schema`]);
+*/
+
+create table class (
+    id UUID,
+    name String,
+    rules Array(String)
+) engine = PostgreSQL('postgres:5432', 'tenderr', 'class', 'tenderr', 'password');
