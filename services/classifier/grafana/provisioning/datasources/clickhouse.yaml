@@ -1,6 +1,7 @@
 apiVersion: 1
 datasources:
   - name: ClickHouse
+    uid: a0b33fe8-e33f-4248-898f-36789d720030
     type: grafana-clickhouse-datasource
     jsonData:
       defaultDatabase: default

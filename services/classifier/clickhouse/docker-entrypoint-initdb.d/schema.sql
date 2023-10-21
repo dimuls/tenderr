@@ -12,3 +12,8 @@ create table class (
     name String,
     rules Array(String)
 ) engine = PostgreSQL('postgres:5432', 'tenderr', 'class', 'tenderr', 'password');
+
+create table element (
+    id String,
+    name String
+) engine = PostgreSQL('postgres:5432', 'tenderr', 'element', 'tenderr', 'password');

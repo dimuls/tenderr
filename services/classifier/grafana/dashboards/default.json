@@ -18,7 +18,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 1,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -85,7 +84,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 17,
+        "h": 16,
         "w": 24,
         "x": 0,
         "y": 0
@@ -208,7 +207,7 @@
             }
           },
           "queryType": "sql",
-          "rawSql": "SELECT $__timeInterval(l.time) as time, c.name as class, count(c.name) as count FROM \"default\".\"log\" as l\r\nLEFT JOIN \"default\".\"class\" as c on l.class_id = c.id\r\nWHERE $__timeFilter(l.dt)\r\nGROUP BY time, class ORDER BY time ASC",
+          "rawSql": "SELECT $__timeInterval(l.time) as time, c.name as class, count(c.name) as count FROM \"default\".\"log\" as l\r\nLEFT JOIN \"default\".\"class\" as c on l.class_id = c.id\r\nWHERE $__timeFilter(l.time)\r\nGROUP BY time, class ORDER BY time ASC",
           "refId": "A",
           "selectedFormat": 4
         }
@@ -230,6 +229,174 @@
         }
       ],
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "a0b33fe8-e33f-4248-898f-36789d720030"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 2,
+      "options": {
+        "displayMode": "basic",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [],
+          "fields": "",
+          "values": true
+        },
+        "showUnfilled": true,
+        "valueMode": "color"
+      },
+      "pluginVersion": "10.1.5",
+      "targets": [
+        {
+          "builderOptions": {
+            "database": "default",
+            "fields": [
+              "element_id"
+            ],
+            "filters": [
+              {
+                "condition": "AND",
+                "filterType": "custom",
+                "key": "time",
+                "operator": "WITH IN DASHBOARD TIME RANGE",
+                "restrictToFields": [
+                  {
+                    "label": "time",
+                    "name": "time",
+                    "picklistValues": [],
+                    "type": "DateTime"
+                  }
+                ],
+                "type": "datetime"
+              },
+              {
+                "condition": "AND",
+                "filterType": "custom",
+                "key": "element_id",
+                "operator": "!=",
+                "type": "String"
+              }
+            ],
+            "groupBy": [
+              "element_id"
+            ],
+            "limit": null,
+            "metrics": [
+              {
+                "aggregation": "count",
+                "alias": "count",
+                "field": "*"
+              }
+            ],
+            "mode": "aggregate",
+            "orderBy": [
+              {
+                "dir": "DESC",
+                "name": "count(*)"
+              }
+            ],
+            "table": "log",
+            "timeField": "time",
+            "timeFieldType": "DateTime"
+          },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "a0b33fe8-e33f-4248-898f-36789d720030"
+          },
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "database": "default",
+              "fields": [
+                "element_id"
+              ],
+              "filters": [
+                {
+                  "condition": "AND",
+                  "filterType": "custom",
+                  "key": "time",
+                  "operator": "WITH IN DASHBOARD TIME RANGE",
+                  "restrictToFields": [
+                    {
+                      "label": "time",
+                      "name": "time",
+                      "picklistValues": [],
+                      "type": "DateTime"
+                    }
+                  ],
+                  "type": "datetime"
+                },
+                {
+                  "condition": "AND",
+                  "filterType": "custom",
+                  "key": "element_id",
+                  "operator": "!=",
+                  "type": "String"
+                }
+              ],
+              "groupBy": [
+                "element_id"
+              ],
+              "limit": null,
+              "metrics": [
+                {
+                  "aggregation": "count",
+                  "alias": "count",
+                  "field": "*"
+                }
+              ],
+              "mode": "aggregate",
+              "orderBy": [
+                {
+                  "dir": "DESC",
+                  "name": "count(*)"
+                }
+              ],
+              "table": "log",
+              "timeField": "time",
+              "timeFieldType": "DateTime"
+            }
+          },
+          "queryType": "sql",
+          "rawSql": "SELECT e.name , count(*) FROM \"default\".\"log\" as l\r\nLEFT JOIN \"default\".\"element\" as e on l.element_id = e.id\r\nWHERE $__timeFilter(l.time) AND ( element_id != '' ) GROUP BY e.name ORDER BY count(*) DESC",
+          "refId": "A",
+          "selectedFormat": 4
+        }
+      ],
+      "title": "Количество клиентских ошибок по источникам",
+      "type": "bargauge"
     }
   ],
   "refresh": "5s",
@@ -240,13 +407,13 @@
     "list": []
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-1m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Default",
   "uid": "b4b3e695-8021-4b26-a5c1-8acef177e901",
-  "version": 14,
+  "version": 1,
   "weekStart": ""
 }

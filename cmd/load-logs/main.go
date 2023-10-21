@@ -54,7 +54,7 @@ func main() {
 	}
 
 	var elementIDs []string
-	for i := 0; i < 40; i++ {
+	for i := 0; i < 10; i++ {
 		var t time.Time
 
 		determStr := t.Add(time.Duration(i) * time.Hour).String()
@@ -99,7 +99,7 @@ func main() {
 			}
 		}
 
-		if client {
+		if client && rand.Float64() > 0.5 {
 			i := rand.Intn(len(elementIDs))
 			log.ElementID = elementIDs[i]
 		}

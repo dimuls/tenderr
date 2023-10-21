@@ -4,7 +4,6 @@ go 1.21.1
 
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.14.3
-	github.com/davecgh/go-spew v1.1.1
 	github.com/go-nlp/dmmclust v1.1.0
 	github.com/gofiber/fiber/v2 v2.50.0
 	github.com/golang-migrate/migrate/v4 v4.16.2

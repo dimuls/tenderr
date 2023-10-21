@@ -33,10 +33,13 @@ services:
       - "127.0.0.1:3000:3000"
     environment:
       - GF_INSTALL_PLUGINS=grafana-clickhouse-datasource
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
     volumes:
       - ./services/classifier/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
       - ./services/classifier/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
-      - ./services/classifier/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./services/classifier/grafana/dashboards:/etc/grafana/dashboards
       - grafana:/var/lib/grafana
     depends_on:
       - clickhouse
