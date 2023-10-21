@@ -18,13 +18,8 @@ type CORS struct {
 type Config struct {
 	Addr        string `yaml:"addr"`
 	PostgresURL string `yaml:"postgresUrl"`
-	TLS         struct {
-		Enabled   bool   `yaml:"enabled"`
-		CachePath string `yaml:"cachePath"`
-		Domain    string `yaml:"domain"`
-	}
-	CORS     CORS   `yaml:"cors"`
-	LogLevel string `yaml:"logLevel"`
+	CORS        CORS   `yaml:"cors"`
+	LogLevel    string `yaml:"logLevel"`
 }
 
 func (c *Config) Load(path string) error {

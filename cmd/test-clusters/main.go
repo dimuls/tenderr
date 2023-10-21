@@ -6,7 +6,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/go-nlp/dmmclust"
 	"github.com/xtgo/set"
 	"github.com/xuri/excelize/v2"
@@ -142,7 +141,10 @@ func main() {
 
 	for _, clust := range clustered {
 		sort.Sort(result[clust.ID()])
-	}
 
-	spew.Dump(result)
+		fmt.Printf("cluster %s:\n", clust.ID())
+		for _, l := range result[clust.ID()] {
+			fmt.Printf("\t%d: %s\n", l.count, l.text)
+		}
+	}
 }

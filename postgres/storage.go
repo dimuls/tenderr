@@ -49,16 +49,40 @@ func (s *Storage) Migrate() error {
 
 func (s *Storage) Classes() (cs []entity.Class, err error) {
 	return cs, s.DB.Select(&cs, `
-		select * from class;
+		select * from class where rules is not null;
 	`)
 }
 
-func (s *Storage) SetClass(c entity.Class) error {
-	_, err := s.DB.Exec(`
-		insert into class (id, name, rules) values ($1, $2, $3)
-			on conflict (id) do
-			update set name = EXCLUDED.name, rules = EXCLUDED.rules
-	`, c.ID, c.Name, pq.Array(c.Rules), c.ID)
+func (s *Storage) SetClasses(cs []entity.Class) (err error) {
+	tx, err := s.DB.Begin()
+	if err != nil {
+		return fmt.Errorf("begig tx: %w", err)
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
+	_, err = s.DB.Exec(`
+		delete from class;
+	`)
+	if err != nil {
+		return fmt.Errorf("delete from class: %w", err)
+	}
+
+	for _, c := range cs {
+		_, err = s.DB.Exec(`
+			insert into class (id, name, rules) values ($1, $2, $3)
+		`, c.ID, c.Name, pq.Array(c.Rules))
+		if err != nil {
+			return fmt.Errorf("insert class: %w", err)
+		}
+	}
+
 	return err
 }
 

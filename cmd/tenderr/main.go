@@ -4,13 +4,17 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/jmoiron/sqlx"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"os"
 	"os/signal"
 	"syscall"
-	tenderr "tednerr"
+
+	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/jmoiron/sqlx"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
+	"tednerr"
+	tenderrClickhouse "tednerr/clickhouse"
 	"tednerr/postgres"
 )
 
@@ -73,16 +77,34 @@ func run(logger *zap.Logger, logLevel zap.AtomicLevel) error {
 		DB: db,
 	}
 
+	conn, err := clickhouse.Open(&clickhouse.Options{
+		Addr: []string{"127.0.0.1:9000"},
+		Auth: clickhouse.Auth{
+			Database: "default",
+			Username: "default",
+			Password: "",
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("clickhouse open: %w", err)
+	}
+
+	err = conn.Ping(context.Background())
+	if err != nil {
+		return fmt.Errorf("clickhouse conn ping: %w", err)
+	}
+
 	err = storage.Migrate()
 	if err != nil {
 		return fmt.Errorf("postgres storage migrate: %w", err)
 	}
 
 	server := &tenderr.Server{
-		Addr:    config.Addr,
-		Storage: storage,
-		CORS:    config.CORS,
-		Logger:  logger,
+		Addr:       config.Addr,
+		Storage:    storage,
+		LogStorage: &tenderrClickhouse.LogStorage{Conn: conn},
+		CORS:       config.CORS,
+		Logger:     logger,
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

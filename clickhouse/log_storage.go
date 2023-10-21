@@ -1,0 +1,19 @@
+package clickhouse
+
+import (
+	"context"
+
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+
+	"tednerr/entity"
+)
+
+type LogStorage struct {
+	Conn driver.Conn
+}
+
+func (ls *LogStorage) AddLog(l entity.Log) error {
+	return ls.Conn.AsyncInsert(context.Background(), `
+		insert into log (dt, id, class_id, msg) values (?, ?, ?, ?)
+	`, false, l.Time, l.ID, l.ClassID, l.Message)
+}

@@ -29,18 +29,23 @@ var ui embed.FS
 
 type Storage interface {
 	Classes() (cs []entity.Class, err error)
-	SetClass(c entity.Class) error
+	SetClasses(cs []entity.Class) error
 	RemoveClass(classID uuid.UUID) error
 }
 
-type Server struct {
-	Addr    string
-	Storage Storage
-	CORS    CORS
-	Logger  *zap.Logger
+type LogStorage interface {
+	AddLog(log entity.Log) error
+}
 
-	rules   map[*regexp.Regexp]entity.Class
-	rulesMx *sync.RWMutex
+type Server struct {
+	Addr       string
+	Storage    Storage
+	LogStorage LogStorage
+	CORS       CORS
+	Logger     *zap.Logger
+
+	rules   map[*regexp.Regexp]*entity.Class
+	rulesMx sync.RWMutex
 }
 
 func notStatic(c *fiber.Ctx) bool {
@@ -48,7 +53,38 @@ func notStatic(c *fiber.Ctx) bool {
 	return strings.HasPrefix(path, "/api/") || strings.HasPrefix(path, "/ws/")
 }
 
+func (s *Server) initRules(cs []entity.Class) error {
+	rules := map[*regexp.Regexp]*entity.Class{}
+
+	for _, c := range cs {
+		for _, r := range c.Rules {
+			rx, err := regexp.Compile(r)
+			if err != nil {
+				return fmt.Errorf("compile class `%s` regexp `%s`: %w", c.Name, r, err)
+			}
+			rules[rx] = &c
+		}
+	}
+
+	s.rulesMx.Lock()
+	s.rules = rules
+	s.rulesMx.Unlock()
+
+	return nil
+}
+
 func (s *Server) ListenAndServe(ctx context.Context) error {
+
+	classes, err := s.Storage.Classes()
+	if err != nil {
+		return fmt.Errorf("get classes from storage: %w", err)
+	}
+
+	err = s.initRules(classes)
+	if err != nil {
+		return fmt.Errorf("init rules: %w", err)
+	}
+
 	ui, err := fs.Sub(ui, "ui/dist")
 	if err != nil {
 		return fmt.Errorf("init ui fs: %w", err)
@@ -141,8 +177,9 @@ func (s *Server) ListenAndServe(ctx context.Context) error {
 
 	app.Route("/api", func(r fiber.Router) {
 		r.Get("/classes", s.getClasses)
-		r.Post("/classes", s.putClasses)
-		r.Delete("/classes/:id", s.deleteClass)
+		r.Put("/classes", s.putClasses)
+
+		r.Post("/logs", s.postLogs)
 	})
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -193,32 +230,75 @@ func (s *Server) getClasses(c *fiber.Ctx) error {
 }
 
 func (s *Server) putClasses(c *fiber.Ctx) error {
-	var class entity.Class
+	var classes []entity.Class
 
-	err := json.Unmarshal(c.Body(), &c)
+	err := json.Unmarshal(c.Body(), &classes)
 	if err != nil {
 		return fiber.ErrBadRequest
 	}
 
-	err = s.Storage.SetClass(class)
+	for i := range classes {
+		if (classes[i].ID == uuid.UUID{}) {
+			classes[i].ID, err = uuid.NewRandom()
+			if err != nil {
+				return fmt.Errorf("generate class id: %w", err)
+			}
+		}
+	}
+
+	classes = append(classes, entity.Class{
+		Name: "Unknown",
+	})
+
+	err = s.initRules(classes)
 	if err != nil {
-		return fmt.Errorf("set class in storage: %w", err)
+		return fiber.ErrBadRequest
+	}
+
+	err = s.Storage.SetClasses(classes)
+	if err != nil {
+		return fmt.Errorf("set classes in storage: %w", err)
 	}
 
 	return c.SendStatus(http.StatusOK)
 }
 
-func (s *Server) deleteClass(c *fiber.Ctx) error {
-	var id uuid.UUID
+func (s *Server) classify(message string) *entity.Class {
+	for rx, c := range s.rules {
+		if rx.MatchString(message) {
+			return c
+		}
+	}
+	return nil
+}
 
-	err := json.Unmarshal(c.Body(), &id)
+func (s *Server) postLogs(c *fiber.Ctx) error {
+	var log struct {
+		ID      string    `json:"id"`
+		Time    time.Time `json:"time"`
+		Message string    `json:"message"`
+	}
+
+	err := json.Unmarshal(c.Body(), &log)
 	if err != nil {
 		return fiber.ErrBadRequest
 	}
 
-	err = s.Storage.RemoveClass(id)
+	var classID uuid.UUID
+
+	class := s.classify(log.Message)
+	if class != nil {
+		classID = class.ID
+	}
+
+	err = s.LogStorage.AddLog(entity.Log{
+		Time:    log.Time,
+		ID:      log.ID,
+		Message: log.Message,
+		ClassID: classID,
+	})
 	if err != nil {
-		return fmt.Errorf("remove class from storage: %w", err)
+		return fmt.Errorf("add log to log storage: %w", err)
 	}
 
 	return c.SendStatus(http.StatusOK)

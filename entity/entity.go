@@ -1,27 +1,32 @@
 package entity
 
 import (
-	"fmt"
-	"regexp"
+	"database/sql/driver"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
+
+type Rules []string
+
+func (rs *Rules) Scan(src interface{}) error {
+	return pq.Array((*[]string)(rs)).Scan(src)
+}
+
+func (rs Rules) Value() (driver.Value, error) {
+	return pq.Array(rs), nil
+}
 
 type Class struct {
 	ID    uuid.UUID `json:"id" db:"id"`
 	Name  string    `json:"name" db:"name"`
-	Rules []string  `json:"rules" db:"rules"`
+	Rules Rules     `json:"rules" db:"rules"`
 }
 
-func (c *Class) CompileRules() ([]*regexp.Regexp, error) {
-	regexps := make([]*regexp.Regexp, 0, len(c.Rules))
-	for i, rule := range c.Rules {
-		rx, err := regexp.Compile(rule)
-		if err != nil {
-			return nil, fmt.Errorf("invalid rule %d: %w", i, err)
-		}
-
-		regexps = append(regexps, rx)
-	}
-	return regexps, nil
+type Log struct {
+	Time    time.Time `json:"time" db:"time"`
+	ID      string    `json:"id" db:"id"`
+	Message string    `json:"message" db:"message"`
+	ClassID uuid.UUID `json:"class" db:"class"`
 }
