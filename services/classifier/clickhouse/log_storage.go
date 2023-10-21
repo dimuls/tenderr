@@ -14,6 +14,6 @@ type LogStorage struct {
 
 func (ls *LogStorage) AddLog(l entity.Log) error {
 	return ls.Conn.AsyncInsert(context.Background(), `
-		insert into log (dt, id, class_id, msg) values (?, ?, ?, ?)
-	`, false, l.Time, l.ID, l.ClassID, l.Message)
+		insert into log (time, class_id, id, element_id, message) values (?, ?, ?, ?, ?)
+	`, false, l.Time, l.ClassID, l.ID, l.ElementUD, l.Message)
 }

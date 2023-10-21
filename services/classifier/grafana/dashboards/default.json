@@ -208,7 +208,7 @@
             }
           },
           "queryType": "sql",
-          "rawSql": "SELECT $__timeInterval(l.dt) as time, c.name as class, count(c.name) as count FROM \"default\".\"log\" as l\r\nLEFT JOIN \"default\".\"class\" as c on l.class_id = c.id\r\nWHERE $__timeFilter(l.dt)\r\nGROUP BY time, class ORDER BY time ASC",
+          "rawSql": "SELECT $__timeInterval(l.time) as time, c.name as class, count(c.name) as count FROM \"default\".\"log\" as l\r\nLEFT JOIN \"default\".\"class\" as c on l.class_id = c.id\r\nWHERE $__timeFilter(l.dt)\r\nGROUP BY time, class ORDER BY time ASC",
           "refId": "A",
           "selectedFormat": 4
         }

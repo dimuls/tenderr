@@ -6,7 +6,7 @@
 
 ## Локальный запуск системы
 
-Поднимите докеры с postgres, clickhouse и grafana 
+Поднять докеры с postgres, clickhouse и grafana 
 ```bash
 docker-compose up -d
 ```

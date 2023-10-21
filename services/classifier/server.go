@@ -272,11 +272,7 @@ func (s *Server) classify(message string) *entity.Class {
 }
 
 func (s *Server) postLogs(c *fiber.Ctx) error {
-	var log struct {
-		ID      string    `json:"id"`
-		Time    time.Time `json:"time"`
-		Message string    `json:"message"`
-	}
+	var log entity.Log
 
 	err := json.Unmarshal(c.Body(), &log)
 	if err != nil {
@@ -290,12 +286,9 @@ func (s *Server) postLogs(c *fiber.Ctx) error {
 		classID = class.ID
 	}
 
-	err = s.LogStorage.AddLog(entity.Log{
-		Time:    log.Time,
-		ID:      log.ID,
-		Message: log.Message,
-		ClassID: classID,
-	})
+	log.ClassID = classID
+
+	err = s.LogStorage.AddLog(log)
 	if err != nil {
 		return fmt.Errorf("add log to log storage: %w", err)
 	}

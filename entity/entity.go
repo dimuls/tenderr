@@ -30,7 +30,7 @@ type Log struct {
 	Time      time.Time `json:"time" db:"time"`
 	ClassID   uuid.UUID `json:"class" db:"class"`
 	ID        string    `json:"id" db:"id"`
-	ElementID string    `json:"ElementId" db:"element_id"`
+	ElementID string    `json:"elementId" db:"element_id"`
 	Message   string    `json:"message" db:"message"`
 }
 

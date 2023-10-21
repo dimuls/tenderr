@@ -38,6 +38,10 @@ func main() {
 		logger.Fatal("get rows of logs sheet", zap.Error(err))
 	}
 
+	rows = rows[1:] // skip header
+
+	f.Close()
+
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
@@ -73,7 +77,7 @@ func main() {
 
 		time.Sleep(time.Duration(rand.Intn(100)+10) * time.Millisecond)
 
-		i := rand.Intn(len(rows)-1) + 1
+		i := rand.Intn(len(rows))
 		row := rows[i]
 
 		if i == 0 {

@@ -1,10 +1,11 @@
 create table log (
-    dt DateTime,
-    id FixedString(33),
+    time DateTime,
     class_id UUID,
-    msg String
+    id FixedString(33),
+    element_id String,
+    message String
 ) engine = MergeTree()
-    order by (dt, id);
+    order by (time, class_id, id);
 
 create table class (
     id UUID,

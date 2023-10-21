@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------
---                        classifer scheme
+--                       classifier scheme
 ---------------------------------------------------------------------
 create table class (
     id uuid primary key,
@@ -18,19 +18,22 @@ INSERT INTO public.class (id, name, rules) VALUES ('00000000-0000-0000-0000-0000
 
 create table user_error (
     id uuid primary key,
-    url text not null,
+    element_id text not null,
     message text not null,
+    created_at timestamp with time zone not null,
     contact jsonb
 );
 
 create table error_notification (
     id uuid primary key,
-    url text,
+    element_id text not null,
     message text not null,
-    resolved bool
+    resolved bool not null,
+    created_at timestamp with time zone not null,
+    resolved_at timestamp with time zone
 );
 
-create table error_solve_waiter (
+create table error_resolve_waiter (
     id uuid primary key,
     error_notification_id uuid not null,
     contact jsonb
