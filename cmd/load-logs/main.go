@@ -3,11 +3,14 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"syscall"
 	"time"
 
@@ -38,6 +41,29 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
+	clientErrorRegexpStrings := []string{
+		"(?i)регистрац",
+		"Unable to upload files",
+		"Unable to get data",
+		"Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.",
+		"Невозможно скачать файл по ссылке",
+	}
+
+	var elementIDs []string
+	for i := 0; i < 40; i++ {
+		var t time.Time
+
+		determStr := t.Add(time.Duration(i) * time.Hour).String()
+		md5Sum := md5.Sum([]byte(determStr))
+
+		elementIDs = append(elementIDs, hex.EncodeToString(md5Sum[:]))
+	}
+
+	var clientErrorRegexpes []*regexp.Regexp
+	for _, rx := range clientErrorRegexpStrings {
+		clientErrorRegexpes = append(clientErrorRegexpes, regexp.MustCompile(rx))
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -59,6 +85,19 @@ func main() {
 			Time:    time.Now(), // use now for testing
 			ID:      row[0],
 			Message: row[2],
+		}
+
+		var client bool
+		for _, rx := range clientErrorRegexpes {
+			if rx.MatchString(row[2]) {
+				client = true
+				break
+			}
+		}
+
+		if client {
+			i := rand.Intn(len(elementIDs))
+			log.ElementID = elementIDs[i]
 		}
 
 		//log.Time, err = time.Parse(time.DateTime, row[1])

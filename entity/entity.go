@@ -27,10 +27,11 @@ type Class struct {
 }
 
 type Log struct {
-	Time    time.Time `json:"time" db:"time"`
-	ID      string    `json:"id" db:"id"`
-	Message string    `json:"message" db:"message"`
-	ClassID uuid.UUID `json:"class" db:"class"`
+	Time      time.Time `json:"time" db:"time"`
+	ClassID   uuid.UUID `json:"class" db:"class"`
+	ID        string    `json:"id" db:"id"`
+	ElementID string    `json:"ElementId" db:"element_id"`
+	Message   string    `json:"message" db:"message"`
 }
 
 func (c *Contact) Scan(src interface{}) error {
