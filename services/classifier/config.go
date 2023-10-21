@@ -1,4 +1,4 @@
-package tenderr
+package classifier
 
 import (
 	"fmt"

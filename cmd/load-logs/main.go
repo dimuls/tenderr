@@ -23,7 +23,7 @@ func main() {
 		logger.Fatal(err.Error())
 	}
 
-	f, err := excelize.OpenFile("logs.xlsx")
+	f, err := excelize.OpenFile("docs/logs.xlsx")
 	if err != nil {
 		logger.Fatal("open logs xlsx", zap.Error(err))
 		return

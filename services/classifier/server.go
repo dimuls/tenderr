@@ -1,4 +1,4 @@
-package tenderr
+package classifier
 
 import (
 	"context"
@@ -21,8 +21,6 @@ import (
 
 	"tednerr/entity"
 )
-
-const userIDLocal = "userID"
 
 //go:embed ui/dist
 var ui embed.FS
@@ -114,10 +112,6 @@ func (s *Server) ListenAndServe(ctx context.Context) error {
 
 		if err != nil && app.Config().ErrorHandler(c, err) != nil {
 			c.SendStatus(http.StatusInternalServerError)
-		}
-
-		if userID := c.Locals(userIDLocal); userID != nil {
-			flags = append(flags, zap.String("userId", userID.(uuid.UUID).String()))
 		}
 
 		flags = append(flags,

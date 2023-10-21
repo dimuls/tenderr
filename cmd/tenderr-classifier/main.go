@@ -13,12 +13,12 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"tednerr"
-	tenderrClickhouse "tednerr/clickhouse"
 	"tednerr/postgres"
+	"tednerr/services/classifier"
+	tenderrClickhouse "tednerr/services/classifier/clickhouse"
 )
 
-const defaultConfigPath = "config.yaml"
+const defaultConfigPath = "config.example.yaml"
 
 func main() {
 	level := zap.NewAtomicLevel()
@@ -46,7 +46,7 @@ func run(logger *zap.Logger, logLevel zap.AtomicLevel) error {
 
 	flag.Parse()
 
-	var config tenderr.Config
+	var config classifier.Config
 
 	err := config.Load(configPath)
 	if err != nil {
@@ -99,7 +99,7 @@ func run(logger *zap.Logger, logLevel zap.AtomicLevel) error {
 		return fmt.Errorf("postgres storage migrate: %w", err)
 	}
 
-	server := &tenderr.Server{
+	server := &classifier.Server{
 		Addr:       config.Addr,
 		Storage:    storage,
 		LogStorage: &tenderrClickhouse.LogStorage{Conn: conn},

@@ -24,14 +24,22 @@ services:
       CLICKHOUSE_USER: tenderr
       CLICKHOUSE_PASSWORD: password
     volumes:
-      - ./clickhouse/users.d:/etc/clickhouse-server/users.d/
+      - ./services/classifier/clickhouse/users.d:/etc/clickhouse-server/users.d/
+      - ./services/classifier/clickhouse/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
       - clickhouse:/var/lib/clickhouse/
   grafana:
     image: grafana/grafana:latest
     ports:
       - "127.0.0.1:3000:3000"
+    environment:
+      - GF_INSTALL_PLUGINS=grafana-clickhouse-datasource
     volumes:
+      - ./services/classifier/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./services/classifier/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./services/classifier/grafana/dashboards:/etc/grafana/provisioning/dashboards
       - grafana:/var/lib/grafana
+    depends_on:
+      - clickhouse
 
 volumes:
   postgres:

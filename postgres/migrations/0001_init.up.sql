@@ -3,3 +3,4 @@ create table class (
     name text not null,
     rules text[]
 );
+

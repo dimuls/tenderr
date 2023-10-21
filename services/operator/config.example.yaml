@@ -1,0 +1,9 @@
+addr: 127.0.0.1:8080
+postgresUrl: postgres://tenderr:password@localhost:5432/tenderr?sslmode=disable
+cors:
+  enabled: true
+  allowedOrigins: "*"
+  allowedMethods: "*"
+  allowedHeaders: "*"
+  allowCredentials: true
+logLevel: warn
