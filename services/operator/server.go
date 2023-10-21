@@ -1,9 +1,8 @@
-package classifier
+package operator
 
 import (
 	"context"
 	"embed"
-	"encoding/json"
 	"fmt"
 	"io/fs"
 	"net/http"
@@ -16,7 +15,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 
 	"tednerr/entity"
@@ -26,9 +24,6 @@ import (
 var ui embed.FS
 
 type Storage interface {
-	Classes() (cs []entity.Class, err error)
-	SetClasses(cs []entity.Class) error
-	RemoveClass(classID uuid.UUID) error
 }
 
 type LogStorage interface {
@@ -36,11 +31,10 @@ type LogStorage interface {
 }
 
 type Server struct {
-	Addr       string
-	Storage    Storage
-	LogStorage LogStorage
-	CORS       CORS
-	Logger     *zap.Logger
+	Addr    string
+	Storage Storage
+	CORS    CORS
+	Logger  *zap.Logger
 
 	rules   map[*regexp.Regexp]*entity.Class
 	rulesMx sync.RWMutex
@@ -51,39 +45,7 @@ func notStatic(c *fiber.Ctx) bool {
 	return strings.HasPrefix(path, "/api/") || strings.HasPrefix(path, "/ws/")
 }
 
-func (s *Server) initRules(cs []entity.Class) error {
-	rules := map[*regexp.Regexp]*entity.Class{}
-
-	for _, c := range cs {
-		c := c
-		for _, r := range c.Rules {
-			rx, err := regexp.Compile(r)
-			if err != nil {
-				return fmt.Errorf("compile class `%s` regexp `%s`: %w", c.Name, r, err)
-			}
-			rules[rx] = &c
-		}
-	}
-
-	s.rulesMx.Lock()
-	s.rules = rules
-	s.rulesMx.Unlock()
-
-	return nil
-}
-
 func (s *Server) ListenAndServe(ctx context.Context) error {
-
-	classes, err := s.Storage.Classes()
-	if err != nil {
-		return fmt.Errorf("get classes from storage: %w", err)
-	}
-
-	err = s.initRules(classes)
-	if err != nil {
-		return fmt.Errorf("init rules: %w", err)
-	}
-
 	ui, err := fs.Sub(ui, "ui/dist")
 	if err != nil {
 		return fmt.Errorf("init ui fs: %w", err)
@@ -214,91 +176,4 @@ func (s *Server) ListenAndServe(ctx context.Context) error {
 	s.Logger.Info("server stopped")
 
 	return nil
-}
-
-func (s *Server) getClasses(c *fiber.Ctx) error {
-	classes, err := s.Storage.Classes()
-	if err != nil {
-		return fmt.Errorf("get classes from storage: %w", err)
-	}
-	return c.JSON(classes)
-}
-
-func (s *Server) putClasses(c *fiber.Ctx) error {
-	var classes []entity.Class
-
-	err := json.Unmarshal(c.Body(), &classes)
-	if err != nil {
-		return fiber.ErrBadRequest
-	}
-
-	for i := range classes {
-		if (classes[i].ID == uuid.UUID{}) {
-			classes[i].ID, err = uuid.NewRandom()
-			if err != nil {
-				return fmt.Errorf("generate class id: %w", err)
-			}
-		}
-	}
-
-	classes = append(classes, entity.Class{
-		Name: "Неизвестная ошибка",
-	})
-
-	err = s.initRules(classes)
-	if err != nil {
-		return fiber.ErrBadRequest
-	}
-
-	err = s.Storage.SetClasses(classes)
-	if err != nil {
-		return fmt.Errorf("set classes in storage: %w", err)
-	}
-
-	return c.SendStatus(http.StatusOK)
-}
-
-func (s *Server) classify(message string) *entity.Class {
-	s.rulesMx.RLock()
-	rules := s.rules
-	s.rulesMx.RUnlock()
-
-	for rx, c := range rules {
-		if rx.MatchString(message) {
-			return c
-		}
-	}
-	return nil
-}
-
-func (s *Server) postLogs(c *fiber.Ctx) error {
-	var log struct {
-		ID      string    `json:"id"`
-		Time    time.Time `json:"time"`
-		Message string    `json:"message"`
-	}
-
-	err := json.Unmarshal(c.Body(), &log)
-	if err != nil {
-		return fiber.ErrBadRequest
-	}
-
-	var classID uuid.UUID
-
-	class := s.classify(log.Message)
-	if class != nil {
-		classID = class.ID
-	}
-
-	err = s.LogStorage.AddLog(entity.Log{
-		Time:    log.Time,
-		ID:      log.ID,
-		Message: log.Message,
-		ClassID: classID,
-	})
-	if err != nil {
-		return fmt.Errorf("add log to log storage: %w", err)
-	}
-
-	return c.SendStatus(http.StatusOK)
 }
