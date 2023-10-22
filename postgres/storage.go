@@ -104,7 +104,7 @@ func (s *Storage) AddUserError(ue entity.UserError) error {
 	_, err := s.DB.Exec(`
 		insert into user_error (id, element_id, message, created_at, contact)
 		values ($1, $2, $3, $4, $5)
-	`, ue.ID, ue.ElementID, ue.Message, ue.CreatedAt)
+	`, ue.ID, ue.ElementID, ue.Message, ue.CreatedAt, ue.Contact)
 	return err
 }
 
@@ -117,7 +117,7 @@ func (s *Storage) UserErrors() (ues []entity.UserError, err error) {
 
 func (s *Storage) AddErrorNotification(n entity.ErrorNotification) error {
 	_, err := s.DB.Exec(`
-		insert into user_error (
+		insert into error_notification (
 		    id,
 			element_id,
 			message,
@@ -125,7 +125,7 @@ func (s *Storage) AddErrorNotification(n entity.ErrorNotification) error {
 			created_at,
 			resolved_at
 		)
-		values ($1, $2, $3, $4, $5)
+		values ($1, $2, $3, $4, $5, $6)
 	`, n.ID, n.ElementID, n.Message, n.Resolved, n.CreatedAt, n.ResolvedAt)
 	return err
 }

@@ -241,6 +241,7 @@
             "mode": "continuous-GrYlRd"
           },
           "mappings": [],
+          "noValue": "Нет ошибок",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -312,7 +313,6 @@
             "groupBy": [
               "element_id"
             ],
-            "limit": null,
             "metrics": [
               {
                 "aggregation": "count",
@@ -369,7 +369,6 @@
               "groupBy": [
                 "element_id"
               ],
-              "limit": null,
               "metrics": [
                 {
                   "aggregation": "count",

@@ -230,6 +230,8 @@ func (s *Server) postUserErrors(c *fiber.Ctx) error {
 		return fmt.Errorf("generate id: %w", err)
 	}
 
+	ue.CreatedAt = time.Now()
+
 	err = s.Storage.AddUserError(ue)
 	if err != nil {
 		return fmt.Errorf("add user error to storage: %w", err)
@@ -259,6 +261,8 @@ func (s *Server) postErrorNotifications(c *fiber.Ctx) error {
 	if err != nil {
 		return fmt.Errorf("generate id: %w", err)
 	}
+
+	en.CreatedAt = time.Now()
 
 	err = s.Storage.AddErrorNotification(en)
 	if err != nil {
