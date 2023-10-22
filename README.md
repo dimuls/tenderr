@@ -44,6 +44,12 @@ go build -o ./bin/ ./cmd/tenderr-classifier && ./bin/tenderr-classifier -config 
 go build -o ./bin/ ./cmd/tenderr-operator && ./bin/tenderr-operator -config ./services/operator/config.example.yaml
 ```
 
+Запуск тестовой нагрузки
+(необходимо положить docs/logs.xlsx файл с логами)
+```bash
+go run ./cmd./load-logs
+```
+
 ## Локальные адреса
 
 * [grafana](http://localhost:3000)
