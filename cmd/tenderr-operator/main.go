@@ -12,6 +12,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
+	"tednerr/mock"
 	"tednerr/postgres"
 	"tednerr/services/operator"
 )
@@ -81,10 +82,11 @@ func run(logger *zap.Logger, logLevel zap.AtomicLevel) error {
 	}
 
 	server := &operator.Server{
-		Addr:    config.Addr,
-		Storage: storage,
-		CORS:    config.CORS,
-		Logger:  logger,
+		Addr:          config.Addr,
+		Storage:       storage,
+		MessageSender: &mock.MessageSender{Logger: logger}, // пока просто мокаем, но нужно вынести это в конфиг
+		CORS:          config.CORS,
+		Logger:        logger,
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

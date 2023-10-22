@@ -31,7 +31,10 @@ body,
 </style>
 
 <template>
-  <div></div>
+  <div>
+    <iframe class="border-0" src="http://localhost:3000/d-solo/b4b3e695-8021-4b26-a5c1-8acef177e901/default?orgId=1&refresh=5s&panelId=1" width="450" height="200"></iframe>
+    <iframe class="border-0" src="http://localhost:3000/d-solo/b4b3e695-8021-4b26-a5c1-8acef177e901/default?orgId=1&refresh=5s&panelId=2" width="450" height="200"></iframe>
+  </div>
 </template>
 
 <script>
