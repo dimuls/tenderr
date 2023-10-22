@@ -33,3 +33,8 @@ go build -o ./bin/ ./cmd/tenderr-operator && ./bin/tenderr-operator -config ./se
 ```bash
 curl -X POST http://localhost:8081/api/user-errors -d '{"elementId":"1946d729e2ddc19eeb747ad19561f8f9","message":"Не работает кнопка продолжить","contact":{"type":"telegram","data":"@dimuls"}}'
 ```
+
+Подписка на оповещение на решение проблемы:
+```bash
+curl -X POST http://localhost:8081/api/error-resolve-waiter -d '{"errorNotificationId":"a56892b8-eaf9-435d-af7e-28235553c013","contact":{"type":"telegram","data":"@dimuls"}}'
+```

@@ -6,4 +6,4 @@ cors:
   allowedMethods: "*"
   allowedHeaders: "*"
   allowCredentials: true
-logLevel: warn
+logLevel: info
