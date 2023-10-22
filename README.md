@@ -4,6 +4,15 @@
 * tenderr-classifier - классификатор логов
 * tenderr-operator - рабочее место оператора
 
+## Содержание репазитория
+
+* ./cmd - точки входа в программы
+* ./entity - сущности используемые в коде
+* ./mock - мок-реализации (на данные момент MessageSender - отправка сообщений о разрешении проблемы)
+* ./postges - реализация хранилища на базе СУБД Postgres
+* ./service/classifier - ядро сервиса tenderr-classifier
+* ./service/operator - ядро сервиса tenderr-operator
+
 ## Локальный запуск системы
 
 Поднять докеры с postgres, clickhouse и grafana 
