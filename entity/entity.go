@@ -54,27 +54,41 @@ func (c Contact) Value() (driver.Value, error) {
 	return string(j), err
 }
 
+type Element struct {
+	ID   string `json:"id" db:"id"`
+	Name string `json:"name" db:"name"`
+}
+
 type Contact struct {
 	Type string `json:"type"`
 	Data string `json:"data"`
 }
 
 type UserError struct {
-	ID      uuid.UUID `json:"id" db:"id"`
-	URL     string    `json:"url" db:"url"`
-	Message string    `json:"message" db:"message"`
-	Contact Contact   `json:"contact" db:"contact"`
+	ID        uuid.UUID `json:"id" db:"id"`
+	ElementID string    `json:"elementId" db:"element_id"`
+	Message   string    `json:"message" db:"message"`
+	CreatedAt time.Time `json:"createdAt" db:"created_at"`
+	Contact   Contact   `json:"contact" db:"contact"`
 }
 
 type ErrorNotification struct {
-	ID       uuid.UUID `json:"id" db:"id"`
-	URL      *string   `json:"url" db:"url"`
-	Message  string    `json:"message" db:"message"`
-	Resolved bool      `json:"resolved" db:"resolved"`
+	ID             uuid.UUID `json:"id" db:"id"`
+	ElementID      string    `json:"elementId" db:"element_id"`
+	Message        string    `json:"message" db:"message"`
+	CreatedAt      time.Time `json:"createdAt" db:"created_at"`
+	Resolved       bool      `json:"resolved" db:"resolved"`
+	ResolveMessage *string   `json:"resolveMessage" db:"resolve_message"`
+	ResolvedAt     time.Time `json:"resolvedAt" db:"resolved_at"`
 }
 
-type ErrorSolveWaiter struct {
+type ErrorResolveWaiter struct {
 	ID                  uuid.UUID `json:"id" db:"id"`
 	ErrorNotificationID uuid.UUID `json:"errorNotificationId" db:"error_notification_id"`
 	Contact             Contact   `json:"contact" db:"contact"`
+}
+
+type ErrorResolveWaiterStats struct {
+	ErrorNotificationID uuid.UUID `json:"errorNotificationId" db:"error_notification_id"`
+	WaitersCount        int       `json:"waitersCount" db:"waiters_count"`
 }

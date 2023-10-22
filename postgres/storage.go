@@ -92,3 +92,81 @@ func (s *Storage) RemoveClass(classID uuid.UUID) error {
 	`, classID)
 	return err
 }
+
+func (s *Storage) Elements() (es []entity.Element, err error) {
+	err = s.DB.Select(&es, `
+		select * from element;
+	`)
+	return
+}
+
+func (s *Storage) AddUserError(ue entity.UserError) error {
+	_, err := s.DB.Exec(`
+		insert into user_error (id, element_id, message, created_at, contact)
+		values ($1, $2, $3, $4, $5)
+	`, ue.ID, ue.ElementID, ue.Message, ue.CreatedAt)
+	return err
+}
+
+func (s *Storage) UserErrors() (ues []entity.UserError, err error) {
+	err = s.DB.Select(&ues, `
+		select * from user_error;
+	`)
+	return
+}
+
+func (s *Storage) AddErrorNotification(n entity.ErrorNotification) error {
+	_, err := s.DB.Exec(`
+		insert into user_error (
+		    id,
+			element_id,
+			message,
+			resolved,
+			created_at,
+			resolved_at
+		)
+		values ($1, $2, $3, $4, $5)
+	`, n.ID, n.ElementID, n.Message, n.Resolved, n.CreatedAt, n.ResolvedAt)
+	return err
+}
+
+func (s *Storage) ResolveErrorNotification(id uuid.UUID, message string) error {
+	_, err := s.DB.Exec(`
+		update error_notification set resolved = true, resolve_message = $1, resolved_at = now() where id = $2
+	`, message, id)
+	return err
+}
+
+func (s *Storage) ErrorNotifications() (ns []entity.ErrorNotification, err error) {
+	err = s.DB.Select(&ns, `
+		select * from error_notification order by created_at desc
+	`)
+	return ns, err
+}
+
+func (s *Storage) AddErrorResolveWaiter(w entity.ErrorResolveWaiter) error {
+	_, err := s.DB.Exec(`
+		insert into error_resolve_waiter (
+		    id,
+			error_notification_id,
+			contact
+		)
+		values ($1, $2, $3)
+	`, w.ID, w.ErrorNotificationID, w.Contact)
+	return err
+}
+
+func (s *Storage) ErrorResolveWaiterStats() (ss []entity.ErrorResolveWaiterStats, err error) {
+	err = s.DB.Select(&ss, `
+		select error_notification_id, count(*) as waiters_count from error_resolve_waiter
+			group by error_notification_id order by waiters_count desc 
+	`)
+	return
+}
+
+func (s *Storage) RemoveErrorResolveWaiters(enID uuid.UUID) (ws []entity.ErrorResolveWaiter, err error) {
+	err = s.DB.Select(&ws, `
+		delete from error_resolve_waiter where error_notification_id=$1 returning *
+	`, enID)
+	return
+}

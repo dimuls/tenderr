@@ -46,8 +46,9 @@ create table error_notification (
     id uuid primary key,
     element_id text not null,
     message text not null,
-    resolved bool not null,
     created_at timestamp with time zone not null,
+    resolved bool not null,
+    resolve_message text,
     resolved_at timestamp with time zone
 );
 

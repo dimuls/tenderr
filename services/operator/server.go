@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 
 	"tednerr/entity"
@@ -24,17 +26,30 @@ import (
 var ui embed.FS
 
 type Storage interface {
+	Elements() ([]entity.Element, error)
+
+	AddUserError(ue entity.UserError) error
+	UserErrors() ([]entity.UserError, error)
+
+	AddErrorNotification(n entity.ErrorNotification) error
+	ResolveErrorNotification(id uuid.UUID, message string) error
+	ErrorNotifications() ([]entity.ErrorNotification, error)
+
+	AddErrorResolveWaiter(w entity.ErrorResolveWaiter) error
+	ErrorResolveWaiterStats() ([]entity.ErrorResolveWaiterStats, error)
+	RemoveErrorResolveWaiters(enID uuid.UUID) ([]entity.ErrorResolveWaiter, error)
 }
 
-type LogStorage interface {
-	AddLog(log entity.Log) error
+type MessageSender interface {
+	SendMessage(c entity.Contact, message string)
 }
 
 type Server struct {
-	Addr    string
-	Storage Storage
-	CORS    CORS
-	Logger  *zap.Logger
+	Addr          string
+	Storage       Storage
+	MessageSender MessageSender
+	CORS          CORS
+	Logger        *zap.Logger
 
 	rules   map[*regexp.Regexp]*entity.Class
 	rulesMx sync.RWMutex
@@ -133,10 +148,16 @@ func (s *Server) ListenAndServe(ctx context.Context) error {
 	}))
 
 	app.Route("/api", func(r fiber.Router) {
-		r.Get("/classes", s.getClasses)
-		r.Put("/classes", s.putClasses)
+		r.Get("/elements", s.getElements)
 
-		r.Post("/logs", s.postLogs)
+		r.Get("/user-errors", s.getUserErrors)
+		r.Post("/user-errors", s.postUserErrors)
+
+		r.Get("/error-notifications", s.getErrorNotifications)
+		r.Post("/error-notifications", s.postErrorNotifications)
+		r.Patch("/error-notifications", s.patchErrorNotifications)
+
+		r.Post("/error-resolve-waiter", s.postErrorResolveWaiter)
 	})
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -176,4 +197,126 @@ func (s *Server) ListenAndServe(ctx context.Context) error {
 	s.Logger.Info("server stopped")
 
 	return nil
+}
+
+func (s *Server) getElements(c *fiber.Ctx) error {
+	es, err := s.Storage.Elements()
+	if err != nil {
+		return fmt.Errorf("get elements from storage: %w", err)
+	}
+
+	return c.JSON(es)
+}
+
+func (s *Server) getUserErrors(c *fiber.Ctx) error {
+	ues, err := s.Storage.UserErrors()
+	if err != nil {
+		return fmt.Errorf("get user errors from storage: %w", err)
+	}
+
+	return c.JSON(ues)
+}
+
+func (s *Server) postUserErrors(c *fiber.Ctx) error {
+	var ue entity.UserError
+
+	err := json.Unmarshal(c.Body(), &ue)
+	if err != nil {
+		return fiber.ErrBadRequest
+	}
+
+	ue.ID, err = uuid.NewRandom()
+	if err != nil {
+		return fmt.Errorf("generate id: %w", err)
+	}
+
+	err = s.Storage.AddUserError(ue)
+	if err != nil {
+		return fmt.Errorf("add user error to storage: %w", err)
+	}
+
+	return c.SendStatus(http.StatusCreated)
+}
+
+func (s *Server) getErrorNotifications(c *fiber.Ctx) error {
+	ns, err := s.Storage.ErrorNotifications()
+	if err != nil {
+		return fmt.Errorf("get error notifications from storage: %w", err)
+	}
+
+	return c.JSON(ns)
+}
+
+func (s *Server) postErrorNotifications(c *fiber.Ctx) error {
+	var en entity.ErrorNotification
+
+	err := json.Unmarshal(c.Body(), &en)
+	if err != nil {
+		return fiber.ErrBadRequest
+	}
+
+	en.ID, err = uuid.NewRandom()
+	if err != nil {
+		return fmt.Errorf("generate id: %w", err)
+	}
+
+	err = s.Storage.AddErrorNotification(en)
+	if err != nil {
+		return fmt.Errorf("add error notification to storage: %w", err)
+	}
+
+	return c.SendStatus(http.StatusCreated)
+}
+
+func (s *Server) patchErrorNotifications(c *fiber.Ctx) error {
+	var r struct {
+		ID      uuid.UUID `json:"id"`
+		Message string    `json:"message"`
+	}
+
+	err := json.Unmarshal(c.Body(), &r)
+	if err != nil {
+		return fiber.ErrBadRequest
+	}
+
+	err = s.Storage.ResolveErrorNotification(r.ID, r.Message)
+	if err != nil {
+		return fmt.Errorf("resolve error notification in storage: %w", err)
+	}
+
+	// Запускаем фоновую джообу для обработки. Для примера просто горутину.
+	go func() {
+		ws, err := s.Storage.RemoveErrorResolveWaiters(r.ID)
+		if err != nil {
+			s.Logger.Error("remove error resolve waiters", zap.Error(err))
+			return
+		}
+
+		for _, w := range ws {
+			s.MessageSender.SendMessage(w.Contact, r.Message)
+		}
+	}()
+
+	return c.SendStatus(http.StatusOK)
+}
+
+func (s *Server) postErrorResolveWaiter(c *fiber.Ctx) error {
+	var w entity.ErrorResolveWaiter
+
+	err := json.Unmarshal(c.Body(), &w)
+	if err != nil {
+		return fiber.ErrBadRequest
+	}
+
+	w.ID, err = uuid.NewRandom()
+	if err != nil {
+		return fmt.Errorf("generate id: %w", err)
+	}
+
+	err = s.Storage.AddErrorResolveWaiter(w)
+	if err != nil {
+		return fmt.Errorf("add error resolve waiter to storage: %w", err)
+	}
+
+	return c.SendStatus(http.StatusCreated)
 }
