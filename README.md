@@ -13,11 +13,25 @@
 * ./service/classifier - ядро сервиса tenderr-classifier
 * ./service/operator - ядро сервиса tenderr-operator
 
-## Локальный запуск системы
+## Локальный запуск системы (в linux)
 
 Поднять докеры с postgres, clickhouse и grafana 
 ```bash
 docker-compose up -d
+```
+
+Сборка фронтенда tenderr-classifier
+```bash
+cd ./services/classifier/ui
+npm install
+npm run build
+```
+
+Сборка фронтенда tenderr-operator
+```bash
+cd ./services/operator/ui
+npm install
+npm run build
 ```
 
 Запуск tenderr-classifer
